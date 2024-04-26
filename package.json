@@ -1,0 +1,23 @@
+{
+  "name": "mancomm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "launch": "npm run build && npm run start"
+  },
+  "keywords": [],
+  "author": "Praven Moorthy",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jsdom": "^21.1.6",
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5"
+  },
+  "dependencies": {
+    "jsdom": "^24.0.0",
+    "axios": "^1.6.8"
+  }
+}
