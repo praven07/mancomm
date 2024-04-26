@@ -2,7 +2,9 @@ import { JSDOM } from 'jsdom';
 
 export class DocumentParser {
 
-    private querySelectors = '[class*="title"], [class*="subtitle"], [class*="part"], [class*="subpart"], h1, h2, p';
+    private selectors = ['title', 'subtitle', 'chapter', 'part', 'subpart', 'authority', 'source', 'section'];
+
+    private headerSelector = 'h1, h2, h3, h4, h5, h6';
 
     public parseHTML(html: string): Array<any> {
 
@@ -10,39 +12,57 @@ export class DocumentParser {
         const document = dom.window.document;
 
         const result: Array<any> = [];
-        const elements = document.querySelectorAll(this.querySelectors);
 
-        elements.forEach((element: Element) => {
-            const tagName = element.tagName.toUpperCase();
-            if (tagName === 'H1' || tagName === 'H2') {
-                result.push({
-                    type: 'Heading',
-                    level: tagName,
-                    content: element.textContent?.trim()
-                });
-            } else if (element.className.includes('part')) {
-                result.push({
-                    type: 'Part',
-                    content: element.textContent?.trim()
-                });
-            } else if (element.className.includes('subpart')) {
-                result.push({
-                    type: 'SubPart',
-                    content: element.textContent?.trim()
-                });
-            } else if (tagName === 'P') {
-                result.push({
-                    type: 'Paragraph',
-                    content: element.textContent?.trim(),
-                    indentLevel: DocumentParser.getIndentLevel(element.className)
-                });
-            }
-        });
-
-        console.log("Data parsing completed.");
+        this.traverseElement(document.documentElement, result);
 
         return result;
     }
+
+
+    private traverseElement(element: Element, result: Array<any>) {
+
+
+        // Case when there is a paragraphy.
+        if (element.tagName == 'P') {
+            result.push({
+                "type": "paragraphy",
+                "indent": DocumentParser.getIndentLevel(element.className),
+                "text": element.textContent,
+            });
+            return;
+        }
+
+        // Corner case when there is not class. 
+        if (element.className == "") {
+            element.childNodes.forEach(child => {
+                if (child.nodeType === child.ELEMENT_NODE) {
+                    this.traverseElement(child as Element, result);
+                }
+            });
+
+        }
+
+        for (let i in this.selectors) {
+
+            if (element.classList.contains(this.selectors[i])) {
+
+                const content: Array<any> = [];
+
+                element.childNodes.forEach(child => {
+                    if (child.nodeType === child.ELEMENT_NODE) {
+                        this.traverseElement(child as Element, content);
+                    }
+                });
+
+                result.push({
+                    "type": this.selectors[i],
+                    "text": element.querySelector(this.headerSelector)?.textContent,
+                    "content": content,
+                });
+            }
+        }
+    }
+
     
     private static getIndentLevel(className: string): number {
         const match = className.match(/indent-(\d+)/);
